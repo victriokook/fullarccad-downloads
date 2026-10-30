@@ -22,3 +22,14 @@ STEPの既定アプリへの変更は、OSの「プログラムから開く」�
 既にMITで公開された版の利用・改変・再配布権は変更しません。
 FreeCADは同梱せず、SheetMetal等の外部部品は必要なソース・ライセンスを保持しています。
 コンパイル済みPython形式は解析を完全に防ぐものではありません。
+
+
+## お問い合わせ / Contact
+
+質問・ご意見・不具合報告 / Questions, feedback and bug reports:
+
+[victriokook@gmail.com](mailto:victriokook@gmail.com)
+
+不具合の報告には、OS、FreeCADのバージョン、FullArcCADのバージョン、再現手順を添えてください。
+
+For bug reports, please include your OS, FreeCAD version, FullArcCAD version, and steps to reproduce the issue.
