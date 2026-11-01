@@ -1,85 +1,50 @@
 # FullArcCAD
 
-## 追加検証・訂正（2026年11月2日） / Follow-up
+## ライセンス文書整備版（第2版） — 2026年11月2日
 
-Windows公開インストーラーの実導入・導入済みランチャー起動・再導入・削除とデータ保持の12項目がPASSしました。GUIクリック経路ではなくsilent導入経路を検証しています。Linux実デスクトップは引き続き未検証です。
+**板金機能は利用できません。** 確認した技術・表示面の指摘へ対応しましたが、包括的な法的認証ではありません。
 
-同梱使用例のライセンスメタデータに関する古い通知文を訂正し、コード・素材の出所確認の未完了事項をまとめました。ライセンス確認全体の完了を示すものではありません。
+[説明と全ダウンロード](https://github.com/victriokook/fullarccad-downloads/releases/tag/v0.2.266-license-mitigation-preview2)
 
-- [追加検証・ライセンス確認状況／訂正](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview1/LICENSE-REVIEW-AND-VALIDATION-20261102.md)
-- [Windowsインストーラー検証記録](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview1/WINDOWS-INSTALLER-VALIDATION-20261102.json)
-- [追補のSHA-256](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview1/SHA256SUMS-FOLLOWUP-20261102.txt)
+- [Windows ポータブル](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview2/FullArcCAD-License-v2-Portable.exe)
+- [Windows インストーラー](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview2/FullArcCAD-License-v2-Setup.exe)
+- [Ubuntu 24.04 amd64 deb](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview2/fullarccad_0.2.266%2Blicensefix.preview2-1_amd64.deb)
+- [Linux tar.gz](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview2/FullArcCAD-License-Docs-v2-Linux-amd64.tar.gz)
+- [ライセンス・出所・ランタイム選択](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview2/LICENSES-AND-SOURCES.md)
 
-The published Windows installer passed 12 actual silent-install/installed-launcher/reinstall/uninstall checks. A real Linux desktop remains untested. The linked supplement corrects stale example-license metadata documentation and lists unresolved provenance/licensing work. Existing binaries/packages are unchanged.
+## ライセンス文書・ランタイム選択を整備した第2版 — 2026年11月2日
 
----
+確認した技術・表示面の指摘を修正したプレビューです。**「すべてのライセンス問題が法的に解消した」と認証するものではありません。** 板金機能は引き続き利用できません。
 
+### 修正内容
 
+- FreeCADの原文ライセンス文書、LGPL 2.1本文、既存MIT本文、外部リーダーの原文MIT表示を同梱しました。
+- 出所・適用範囲・上流ソースと互換ランタイムの選択方法を `LICENSES-AND-SOURCES.md` にまとめました。
+- 利用条件で、第三者ライセンスによる利用・変更・必要なデバッグ解析等の権利を制限しないことを明記しました。
+- Windowsは環境変数 `FULLARCCAD_ENGINE` で互換FreeCAD.exeを明示指定できます。既存設定より優先されます。Linuxは既存の `fullarccad --configure --freecad ...` を使用できます。CPython 3.11・64bitのABI互換性が必要です。
+- 使用例のライセンスメタデータに関する古い説明を配布物の内部文書でも訂正しました。使用例を勝手に再ライセンスしていません。過去のMIT許諾は維持されます。
+- SheetMetal本体・付属NetworkX・板金カーネルの呼び出しは除外済みです。
 
-## SheetMetal依存を除いた修正版を公開しました — 2026年11月2日
+### 導入
 
+Windowsは `FullArcCAD-License-v2-Portable.exe` または `FullArcCAD-License-v2-Setup.exe` を使用してください。FreeCAD 1.1.4 / CPython 3.11で検証しています。
 
-**この版では板金機能を利用できません。** 通常のCAD機能・STEP入出力・10言語の検証を行ったWindows／Linuxプレビューです。
+Ubuntu 24.04 amd64は `sudo apt install ./fullarccad_0.2.266+licensefix.preview2-1_amd64.deb`。初回に公式FreeCAD 1.1.3 x86_64 py311 AppImageを選択します。FreeCAD本体はこの配布物に同梱していません。
 
+### 検証と確認範囲
 
-[修正版の説明・全ダウンロード](https://github.com/victriokook/fullarccad-downloads/releases/tag/v0.2.266-license-mitigation-preview1)
+Windows新版は実導入・同梱文書・ランタイム明示指定・起動・再導入・削除など17項目、最終ポータブル起動、配布内容監査がPASSです。Linux新版はクリーンUbuntuでの導入、ライセンス文書の導入先配置、版番号、削除と配布内容監査がPASSです。
 
+本体432 Windows / 435 Linuxネイティブモジュールは前版の監査済みバイナリと一致します。前版での全10言語・スケッチ・STEP入出力・保存再読込等の検証を引き継ぎます。今回はランチャーと文書・パッケージを変更し、変更箇所を検証しました。Linux実デスクトップ・Waylandは未検証です。
 
-- [Windows ポータブルEXE](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview1/FullArcCAD-License-Mitigation-Portable.exe)
-- [Windows インストーラーEXE](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview1/FullArcCAD-License-Mitigation-Setup.exe)
-- [Ubuntu 24.04 amd64用deb](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview1/fullarccad_0.2.266%2Blicensefix.preview1-1_amd64.deb)
-- [Linux tar.gz](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview1/FullArcCAD-License-Mitigation-Linux-amd64.tar.gz)
-- [SHA-256一覧](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.266-license-mitigation-preview1/SHA256SUMS.txt)
+既知の同梱外部リーダー6ファイルは固定上流コミットと一致し、MIT表示を保持しています。作成経緯の申告と過去のMIT表記付き配布アーカイブも記録しました。FreeCAD側1,534 Pythonファイルおよび除外済みSheetMetal 33 Pythonファイルと、本体の一定以上の長さの関数を機械比較し、構文木の一致は見つかりませんでした。SVGのバイト一致もありませんでした。これは独立した権利確認や流用がないことの証明ではありません。全第三者権利・LGPLの最終的な法的評価・特許や商標等の確認を保証するものではありません。
 
-
-## 配布再開：SheetMetal依存を除外した修正版（2026年11月2日）
-
-
-一時停止していた配布を、構成を変更したプレビュー版として再開します。この版ではSheetMetal本体・リソース・付属NetworkXを同梱せず、起動時の読み込みと板金カーネルの呼び出しを除去しました。
-
-
-**板金機能は利用できません。** ベース板、フランジ、展開、ヘム、輪郭フランジ、折曲げ、コーナーリリーフ、継ぎ目の操作は非表示です。板金機能を使う既存データの再計算・編集には対応しません。元データを保全し、コピーで試してください。
-
-
-通常のスケッチ・ソリッド操作、寸法編集、保存・再読込、STEP入出力は検証済みです。日本語、英語、ドイツ語、繁体字中国語、スペイン語、フランス語、簡体字中国語、韓国語、イタリア語、ブラジルポルトガル語の10言語に対応します。
-
-
-### ダウンロードと導入
-
-
-- Windows: `FullArcCAD-License-Mitigation-Portable.exe`（インストール不要）または `FullArcCAD-License-Mitigation-Setup.exe`。
-- WindowsではCPython 3.11を内蔵したFreeCADを別途用意してください。FreeCAD 1.1.4で検証しています。
-- Ubuntu 24.04 amd64: `sudo apt install ./fullarccad_0.2.266+licensefix.preview1-1_amd64.deb`。
-- Linuxの初回起動では、[公式FreeCAD 1.1.3 Linux x86_64 py311 AppImage](https://github.com/FreeCAD/FreeCAD/releases/tag/1.1.3)を選択します。FUSE不要で自動展開します。`README-Linux-ja.md`に詳細があります。
-- Linux手動導入用のtar.gzも添付しています。FreeCAD本体はどの配布物にも同梱していません。
-- 整合性の確認には `SHA256SUMS.txt`、検証概要には `VALIDATION-SUMMARY.json` を参照してください。
-
-
-### 確認した範囲
-
-
-Windowsの全432ネイティブモジュール、10言語、設定保存後の再起動、スケッチ・寸法編集・Undo/Redo、STEP入出力、別プロセスでのFCStd再読込と再編集、最終ポータブルEXEからのモデル読み込み、配布内容の監査がPASSです。Windowsインストーラーの実導入は、上記追補の12項目で検証済みです。
-
-
-LinuxはクリーンなUbuntu 24.04 amd64コンテナー・Xvfb上で、一般ユーザーによる初回設定、FreeCAD AppImage自動展開、10言語、CAD操作、更新、削除・purge時のユーザーデータ保持など27項目がPASSです。実デスクトップ・Wayland・他のディストリビューションは未検証です。
-
-
-### ライセンスについての説明
-
-
-「SheetMetalは一律GPL」「ソースを保持するだけで十分」といった以前の説明は正確ではありませんでした。確認した同梱LICENSEと主要ファイルヘッダーはLGPL表記でした。今回は部品名だけで法的適合を断定せず、SheetMetal依存を除いた配布構成に変更しました。
-
-
-これは依存除去と技術検証の報告であり、法的適合全般の保証・認証ではありません。残るFreeCADや第三者ソフトウェアには各ライセンスが適用されます。既存MIT部分の権利と第三者ライセンス上の権利を変更・取り消すものではありません。`LEGACY_MIT_LICENSE.txt`、`THIRD_PARTY_NOTICES.txt`、`TERMS-ja.txt`を参照してください。
-
-
-過去の配布物は引き続き取り下げ状態です。新規利用には、このリリースのファイルを使用してください。
-
+原文通知・利用条件・出所一覧・検証JSONとSHA-256一覧を添付しています。法的な最終判断が必要な場合は、実装・配布構成とこれらの証拠をもとに権利者や専門家の確認が必要です。
 
 ## English
 
+This second preview remediates identified technical/documentation findings; it is **not comprehensive legal clearance**. Sheet metal features remain unavailable. The package now includes unmodified FreeCAD/LGPL texts, legacy and reader MIT notices, an origin/source/license index, explicit preservation of third-party modification and required debugging rights, corrected example-metadata documentation, and Windows `FULLARCCAD_ENGINE` selection for a compatible FreeCAD.exe.
 
-Downloads resume with a dependency-reduced preview. SheetMetal, its resources and bundled NetworkX are excluded. Startup loading and sheet metal kernel calls have been removed. **Sheet metal features are unavailable**, including base plates, flanges, unfolding, hems, contour flanges, folding, reliefs and seam gaps. Recomputing or editing existing sheet metal features is unsupported; preserve original documents and work on copies.
+Windows actual installation, documents, explicit runtime selection, launch, reinstall/removal and data preservation passed 17 checks; the final portable and package audit passed. Linux clean installation, license-document placement, version/removal and package audit passed. The 432 Windows / 435 Linux native modules are identical to previously audited binaries, retaining prior ten-language/CAD/STEP/save/reopen evidence. Only launchers, documentation and packaging changed. A real Linux desktop/Wayland remains untested.
 
-
-Normal sketch/solid workflows, dimension editing, save/reopen and STEP import/export were validated. Ten interface languages remain available. FreeCAD is a separate prerequisite, not bundled: Windows was tested with FreeCAD 1.1.4 / CPython 3.11; Linux with the official FreeCAD 1.1.3 x86_64 py311 AppImage.
+The pinned MIT reader files and notices were verified. Maintainer origin declarations and the local historical MIT archive comparison were recorded. Exact substantial AST-body and SVG-byte comparisons against installed FreeCAD and the excluded addon found no matches; that limited check is not proof of originality or freedom from all third-party rights. No claim of final legal clearance for every dependency, copyright, patent or trademark is made. See attached notices, terms, source index, validation records and checksums.
