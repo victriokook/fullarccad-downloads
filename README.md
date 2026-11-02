@@ -1,6 +1,43 @@
 # FullArcCAD
 
-## ライセンス文書整備版（第2版） — 2026年11月2日
+## 独自板金プレビュー5 — Windows x64
+
+独自実装の板金機能を追加したWindows向け試用版です。**以前の「板金機能なし」のライセンス文書整備版とは別の新しいプレビュー**です。旧SheetMetalアドオン・付属NetworkXは引き続き同梱しません。
+
+### ダウンロード
+
+- **推奨:** [サンプル・ガイド付きWindows ZIP](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.271-independent-sheet-preview5/FullArcCAD-SheetMetal-Preview5-Windows-x64.zip)を解凍し、`Start-SheetMetal-Preview5.cmd`を実行。
+- [ポータブルEXE単体](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.271-independent-sheet-preview5/FullArcCAD-SheetMetal-Preview5-Portable.exe)も添付。
+- FreeCAD本体は別途必要です。**FreeCAD 1.1.4 / CPython 3.11 x64で検証**しています。互換ランタイムを選択してください。ZIPのCMDは検証済みソフトウェアOpenGLを使用します。
+- [操作ガイド](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.271-independent-sheet-preview5/SheetMetal-guide-ja-en.md)、[検証概要](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.271-independent-sheet-preview5/VALIDATION-SUMMARY.json)、[SHA-256](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.271-independent-sheet-preview5/SHA256SUMS.txt)。
+
+### 追加した機能
+
+- 矩形ベースと4辺からの曲げ位置選択、最大8回の連続曲げ。
+- 独立した1～4側面のフランジ。各面の半径・正負角度・直線長・K係数を個別指定。
+- ベースの貫通丸穴を最大32個。既存の曲げ・トレイ・展開への一括反映、Undo/Redoと保存後の再編集。
+- 切り欠き付きの実外形展開、外形/曲げ線/穴CIRCLEを分けたDXF、形成・展開STEP、曲げ表CSV。
+
+![穴付き板金トレイ](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.271-independent-sheet-preview5/Preview-tray.png)
+
+### 検証・制限
+
+形状・互換性・回帰・実GUIなど**146項目がPASS**。別のDXFリーダーで32本の線と4つの円を読み込み、円中心と半径を確認。STEPの体積と穴のワイヤー、最終ポータブル起動、434ネイティブモジュールの配布監査も通過しています。ローカルQwen2.5-Coderを設計レビューに使用し、形状と操作は独立して検証しました。製品利用時にAIは不要です。
+
+対象は矩形・一定板厚です。角は開いたままで、曲げ部/壁面の穴、長穴、ヘム、任意輪郭、トレイ壁への追加連続曲げは未対応です。K係数は実材料・工具で校正してください。工具進入・曲げ順序・加工精度の認証ではありません。新しい文書はこの版で編集してください。旧版は新形式の再計算を拒否します。
+
+**今回はWindowsポータブルのみ。Linux板金版と新インストーラーの実導入は未検証です。** 既存のLinux版は引き続き板金なしです。新規画面は日本語/英語対応で、従来10言語すべてでの新画面検証は行っていません。
+
+同梱の既存MIT許諾・第三者通知を保持しています。技術的な依存除去と独自実装の追加であり、包括的な法的適合認証を示すものではありません。
+
+## English
+
+Windows-only independent sheet-metal preview: rectangular bases, four starting sides, up to eight sequential full-width bends, one to four independent tray walls, up to 32 base through holes, true flat-outline/DXF circles, STEP and bend CSV. Download the ZIP for the launcher, sample, guide and license notices. A separate FreeCAD CPython 3.11 x64 runtime is required; tested with FreeCAD 1.1.4. 146 checks, final portable launch and the 434-module distribution audit passed. Corners remain open; arbitrary outlines, hems, wall/bend holes and tooling/manufacturing certification are outside scope. Linux sheet functionality is not released here. This does not restore the excluded upstream SheetMetal addon. Preserve prior MIT permissions and third-party notices; technical validation is not comprehensive legal clearance.
+
+
+---
+
+## 旧ライセンス文書整備版（第2版・板金なし） — 2026年11月2日
 
 **板金機能は利用できません。** 確認した技術・表示面の指摘へ対応しましたが、包括的な法的認証ではありません。
 
