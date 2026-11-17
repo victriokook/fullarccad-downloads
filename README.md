@@ -1,5 +1,13 @@
 # FullArcCAD
 
+## 結合修正版 — Windows x64・Linux amd64
+
+- [Windowsインストーラー](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.307-native.mirror-combine.preview1/FullArcCAD-Setup-Native-Preview.exe) / [Windowsポータブル版](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.307-native.mirror-combine.preview1/FullArcCAD-Portable-Native-Preview.exe)
+- [Ubuntu 24.04 amd64用deb](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.307-native.mirror-combine.preview1/fullarccad_0.2.307%2Bindependent.sheet.preview41.combinefix1-1_amd64.deb) / [Linux tar.gz](https://github.com/victriokook/fullarccad-downloads/releases/download/v0.2.307-native.mirror-combine.preview1/FullArcCAD-Mirror-Combine-Fix-Linux-amd64.tar.gz)
+- [導入手順・検証結果・SHA-256](https://github.com/victriokook/fullarccad-downloads/releases/tag/v0.2.307-native.mirror-combine.preview1)
+
+元のボディと、そのボディを参照するミラーから作った別ボディを結合できます。独自板金プレビュー41をベースにしています。
+
 ## 独自板金プレビュー5 — Windows x64
 
 独自実装の板金機能を追加したWindows向け試用版です。**以前の「板金機能なし」のライセンス文書整備版とは別の新しいプレビュー**です。旧SheetMetalアドオン・付属NetworkXは引き続き同梱しません。
