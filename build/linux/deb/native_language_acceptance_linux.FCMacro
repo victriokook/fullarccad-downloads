@@ -1,0 +1,108 @@
+import os,json,traceback,importlib,time
+from pathlib import Path
+import FreeCAD as App,FreeCADGui as Gui
+from PySide import QtCore,QtWidgets as W
+state=Path(os.environ['FULLARCCAD_STATE_DIR']);runtime=Path(os.environ['FULLARCCAD_TEST_RUNTIME'])
+expected=os.environ['FULLARCCAD_TEST_LANGUAGE'];checks=[]
+def check(name,condition,details=None):
+    checks.append({'name':name,'passed':bool(condition),'details':details})
+    if not condition:raise AssertionError(name+': '+repr(details))
+def run():
+    try:
+        import i18n
+        ws=Gui.fluxcad_workspace;main=Gui.getMainWindow()
+
+        import sys
+        import sheetmetal_bridge
+        check('dependency_not_packaged', not (runtime/'addons/SheetMetal').exists() and not (runtime/'addons/python-deps').exists())
+        check('dependency_not_loaded', not any(n.startswith('SheetMetal') for n in sys.modules))
+        check('sheet_actions_hidden', all(not a.isVisible() for k,a in ws.ribbon_actions.items() if k.startswith('sheet_')))
+        for name,fn in [('bridge',sheetmetal_bridge.load)]+[(n,importlib.import_module(n).shape) for n in ('model_contour','model_hem','fold_line_op','corner_relief_op','junction_op')]:
+            try:
+                if name=='bridge':fn()
+                elif name in ('model_contour','model_hem'):fn(*([None] if name=='model_contour' else [None,None]))
+                else:fn(None,None,None)
+            except RuntimeError:pass
+            else:raise AssertionError('Sheet kernel still available: '+name)
+        check('all_sheet_entry_points_blocked',True)
+        check('native_i18n',Path(i18n.__file__).suffix=='.so',i18n.__file__)
+        check('active_language',i18n.language()==expected,i18n.language())
+        check('native_FreeCAD_preference',App.ParamGet('User parameter:BaseApp/Preferences/General').GetString('Language')==i18n.LANGUAGES[expected]['freecad'])
+        check('all_language_actions',set(ws.language_actions)==set(i18n.LANGUAGES))
+        check('checked_language',ws.language_actions[expected].isChecked())
+        check('product_branding',i18n.tr('FluxCAD  |  スケッチ → 押し出し → 編集  |  単位 mm').startswith('FullArcCAD'))
+        action=main.findChild(W.QAction,'FullArcCAD_glTFControlsAction') if hasattr(W,'QAction') else None
+        if action is None:
+            from PySide import QtGui
+            action=main.findChild(QtGui.QAction,'FullArcCAD_glTFControlsAction')
+        check('translated_glTF_menu',action is not None and action.text()==i18n.tr('glTF 表示設定（材質・アニメーション）…'),action.text() if action else None)
+        import example_guide,example_tools
+        for item in example_tools.CATALOG:
+            text=example_guide.content(item[0])['guide']
+            check('guide_'+item[0],text.startswith('# '))
+        dialog_capture={}
+        def inspect_guide():
+            for widget in W.QApplication.topLevelWidgets():
+                if widget.objectName()=='FluxExampleGuide':
+                    browser=widget.findChild(W.QTextBrowser,'FluxGuideText')
+                    dialog_capture['text']=browser.toPlainText()
+                    dialog_capture['title']=widget.windowTitle()
+                    box=widget.findChild(W.QDialogButtonBox)
+                    dialog_capture['close']=box.button(W.QDialogButtonBox.Close).text()
+                    widget.grab().save(str(state/'guide.png'));widget.reject()
+        QtCore.QTimer.singleShot(400,inspect_guide)
+        example_guide.show(ws)
+        check('actual_guide_dialog',bool(dialog_capture.get('text')) and dialog_capture.get('title')==i18n.tr('使用例のガイド','Example Guide'))
+        check('actual_close_button',dialog_capture.get('close')==i18n.tr('閉じる','Close'),dialog_capture.get('close'))
+        warning_capture={}
+        error_text=i18n.tr('面を選択')
+        def inspect_warning():
+            for widget in W.QApplication.topLevelWidgets():
+                if isinstance(widget,W.QMessageBox):
+                    warning_capture['text']=widget.text();widget.grab().save(str(state/'warning.png'));widget.accept()
+        def deliberate_error():raise ValueError(error_text)
+        QtCore.QTimer.singleShot(400,inspect_warning);ws.safe(deliberate_error)
+        check('actual_warning_dialog',warning_capture.get('text')==error_text,warning_capture)
+        import gltf_controls
+        from types import SimpleNamespace
+        import gltf_import
+        original=gltf_import.runtime
+        gltf_import.runtime=lambda _:SimpleNamespace(animations=[{'duration':3}])
+        asset=SimpleNamespace(VariantIndex=-1,AnimationIndex=-1,AnimationTime=0.,Play=False,Document=None)
+        asset.getEnumerationsOfProperty=lambda name:['元の材質','User material'] if name=='MaterialVariant' else ['なし','User animation']
+        panel=gltf_controls.Panel(asset);panel.timer.stop()
+        check('native_panel_translation',panel.play.text()==i18n.tr('再生 / 停止'))
+        check('native_panel_sentinel',panel.variant.itemText(0)==i18n.tr('元の材質'))
+        check('user_names_preserved',panel.variant.itemText(1)=='User material')
+        panel.close();gltf_import.runtime=original
+        if os.environ.get('FULLARCCAD_TEST_IMPORT_ALL')=='1':
+            imported=[]
+            for binary in runtime.glob('*.so'):
+                name=binary.name.split('.')[0]
+                if name in ('_fullarc_entry','_fullarc_launch'):continue
+                importlib.import_module(name);imported.append(name)
+            check('all_native_imports',len(imported)==len(list(runtime.glob('*.so')))-2,len(imported))
+            doc=App.newDocument('LocalizationAcceptance');a=doc.addObject('Part::Box','Box');a.Length=20;a.Width=15;a.Height=10
+            b=doc.addObject('Part::Cylinder','Hole');b.Radius=3;b.Height=10
+            cut=doc.addObject('Part::Cut','Cut');cut.Base=a;cut.Tool=b;doc.recompute()
+            check('parametric_geometry',cut.Shape.isValid() and cut.Shape.Volume>0,cut.Shape.Volume)
+            doc.saveAs(str(state/'acceptance.FCStd'));App.closeDocument(doc.Name)
+            reopened=App.openDocument(str(state/'acceptance.FCStd'));check('reopen',reopened.getObject('Cut').Shape.isValid());App.closeDocument(reopened.Name)
+        main.resize(1500,950);main.show();W.QApplication.processEvents()
+        main.grab().save(str(state/'application.png'))
+        if os.environ.get('FULLARCCAD_TEST_SWITCH')=='1':
+            codes=list(i18n.LANGUAGES);target=codes[(codes.index(expected)+1)%len(codes)]
+            def dismiss():
+                for widget in W.QApplication.topLevelWidgets():
+                    if isinstance(widget,W.QMessageBox):widget.accept()
+            timer=QtCore.QTimer();timer.timeout.connect(dismiss);timer.start(100)
+            ws.language_actions[target].trigger();timer.stop()
+            check('menu_change_persisted',i18n.pending_language()==target,target)
+            check('menu_change_checked',ws.language_actions[target].isChecked())
+            check('restart_required',i18n.language()==expected)
+        result={'status':'PASS','language':expected,'checks':checks}
+    except Exception:
+        result={'status':'FAIL','language':expected,'checks':checks,'error':traceback.format_exc()}
+    (state/'acceptance.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+    QtCore.QTimer.singleShot(100,W.QApplication.quit)
+QtCore.QTimer.singleShot(1200,run)

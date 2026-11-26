@@ -1,0 +1,142 @@
+import os, sys
+root = os.path.dirname(os.path.abspath(__file__))
+def prioritize_workspace(root):
+    normalized = os.path.normcase(os.path.realpath(root))
+    sys.path[:] = [root] + [p for p in sys.path if p and os.path.normcase(os.path.realpath(p)) != normalized]
+prioritize_workspace(root)
+import importlib
+import translations_en
+import i18n
+importlib.reload(translations_en)
+importlib.reload(i18n)
+import ribbon
+import grid
+import sketch_panel
+import navigation
+import navigation_cube
+import model
+import sketch_regions
+import sketch_snap
+import sketch_validation
+import region_picker
+import drag_move
+import browser
+import body_delete
+import extrude_panel
+import floating_panel
+import model_edges
+import edge_panel
+import model_split
+import split_panel
+import model_combine
+import combine_panel
+import model_assembly
+import assembly_panel
+import model_taper
+import model_extents
+import extent_panel
+import model_axis
+import model_mirror
+import model_features
+import model_sections
+import model_planes
+import command_search
+import feature_panel
+import model_transform
+import transform_panel
+import model_scale_dimensions
+import scale_dimensions_panel
+import model_interference
+import interference_panel
+import model_plastic
+import plastic_panel
+import model_align
+import align_panel
+import model_mesh
+import mesh_panel
+import model_mesh_edit
+import mesh_operations_panel
+import model_thread
+import model_hole
+import hole_panel
+import model_primitives
+import primitive_panel
+import model_path_pattern
+import path_pattern_panel
+import model_construction
+import construction_panel
+import model_construction_axis
+import construction_axis_panel
+import fluxcad
+import parameters
+import parameter_panel
+importlib.reload(parameters)
+importlib.reload(parameter_panel)
+importlib.reload(ribbon)
+importlib.reload(grid)
+importlib.reload(sketch_panel)
+importlib.reload(navigation)
+importlib.reload(navigation_cube)
+importlib.reload(model)
+importlib.reload(sketch_regions)
+importlib.reload(sketch_snap)
+importlib.reload(sketch_validation)
+importlib.reload(region_picker)
+importlib.reload(drag_move)
+importlib.reload(browser)
+importlib.reload(body_delete)
+importlib.reload(extrude_panel)
+importlib.reload(floating_panel)
+importlib.reload(model_edges)
+importlib.reload(edge_panel)
+importlib.reload(model_split)
+importlib.reload(split_panel)
+importlib.reload(model_combine)
+importlib.reload(combine_panel)
+importlib.reload(model_assembly)
+importlib.reload(assembly_panel)
+importlib.reload(model_taper)
+importlib.reload(model_extents)
+importlib.reload(extent_panel)
+importlib.reload(model_axis)
+importlib.reload(model_mirror)
+importlib.reload(model_features)
+importlib.reload(model_sections)
+importlib.reload(model_planes)
+importlib.reload(command_search)
+importlib.reload(feature_panel)
+importlib.reload(model_transform)
+importlib.reload(transform_panel)
+importlib.reload(model_scale_dimensions)
+importlib.reload(scale_dimensions_panel)
+importlib.reload(model_interference)
+importlib.reload(interference_panel)
+importlib.reload(model_plastic)
+importlib.reload(plastic_panel)
+importlib.reload(model_align)
+importlib.reload(align_panel)
+importlib.reload(model_mesh)
+importlib.reload(mesh_panel)
+importlib.reload(model_mesh_edit)
+importlib.reload(mesh_operations_panel)
+importlib.reload(model_thread)
+importlib.reload(model_hole)
+importlib.reload(hole_panel)
+importlib.reload(model_primitives)
+importlib.reload(primitive_panel)
+importlib.reload(model_path_pattern)
+importlib.reload(path_pattern_panel)
+importlib.reload(model_construction)
+importlib.reload(construction_panel)
+importlib.reload(model_construction_axis)
+importlib.reload(construction_axis_panel)
+importlib.reload(fluxcad)
+import sheetmetal_bridge
+try:
+    sheetmetal_bridge.load()
+except Exception as error:
+    import FreeCAD as App
+    App.Console.PrintWarning('FullArcCAD SheetMetal: '+str(error)+'\n')
+import gltf_import
+gltf_import.install()
+fluxcad.start()

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="model/step"><comment>STEP CAD document</comment><glob pattern="*.step"/><glob pattern="*.stp"/><generic-icon name="x-office-drawing"/></mime-type>
+  <mime-type type="application/x-extension-fcstd"><comment>FreeCAD document</comment><glob pattern="*.fcstd"/><generic-icon name="x-office-drawing"/></mime-type>
+  <mime-type type="application/x-fullarccad-brep"><comment>CAD boundary representation</comment><glob pattern="*.brep"/><generic-icon name="x-office-drawing"/></mime-type>
+</mime-info>

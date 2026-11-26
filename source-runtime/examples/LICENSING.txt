@@ -1,0 +1,1 @@
+Project-managed example models and guides are MIT licensed. This grant supersedes old All rights reserved metadata in these models. See LICENSE and ../OPEN-SOURCE.md.

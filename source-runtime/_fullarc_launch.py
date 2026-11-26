@@ -1,0 +1,78 @@
+"""Installed FullArcCAD entry point and local file-open queue."""
+import os,json,time,traceback,runpy
+from pathlib import Path
+import FreeCAD as App,FreeCADGui as Gui
+from i18n import tr
+from PySide import QtCore,QtWidgets
+_root=Path(__file__).resolve().parent
+_state=Path(os.environ['FULLARCCAD_STATE_DIR']);_state.mkdir(parents=True,exist_ok=True)
+_opened={};_busy=False
+_extensions={'.fcstd','.step','.stp','.stl','.obj','.ply','.off','.glb','.gltf','.iges','.igs','.brep'}
+def _json(path,value):
+    temp=path.with_suffix('.tmp');temp.write_text(json.dumps(value,ensure_ascii=False),encoding='utf-8');temp.replace(path)
+try:
+    import _fullarc_entry
+except Exception:
+    _json(_state/'startup_error.json',{'error':traceback.format_exc()});raise
+def _open(path):
+    path=Path(path).resolve();key=os.path.normcase(str(path))
+    if not path.is_file():raise ValueError(tr('ファイルが見つかりません: ', 'File not found: ')+str(path))
+    extension=path.suffix.lower()
+    if extension not in _extensions:raise ValueError(tr('未対応のファイル形式: ', 'Unsupported file type: ')+extension)
+    for doc in App.listDocuments().values():
+        if doc.FileName and os.path.normcase(os.path.abspath(doc.FileName))==key:
+            App.setActiveDocument(doc.Name);return doc
+    if key in _opened:
+        try:
+            doc=App.getDocument(_opened[key]);App.setActiveDocument(doc.Name);return doc
+        except (NameError,RuntimeError):_opened.pop(key,None)
+    if extension=='.fcstd':doc=App.openDocument(str(path))
+    elif extension in ('.gltf','.glb'):
+        import gltf_import
+        doc=gltf_import.open(str(path)).Document
+    elif extension in ('.stl','.obj','.ply','.off'):
+        import Mesh
+        Mesh.open(str(path));doc=App.ActiveDocument
+    else:
+        import ImportGui
+        ImportGui.open(str(path));doc=App.ActiveDocument
+    if doc is None:raise RuntimeError(tr('インポーターが文書を作成しませんでした。', 'The importer did not create a document'))
+    _opened[key]=doc.Name
+    import recent_files
+    recent_files.remember(str(path))
+    view=Gui.getDocument(doc.Name).activeView();view.setAnimationEnabled(False);view.viewAxonometric();Gui.fluxcad_workspace.fit()
+    return doc
+def _poll():
+    global _busy
+    if _busy:return
+    _busy=True
+    try:
+        for request in sorted((_state/'requests').glob('*.json')):
+            results=[]
+            try:
+                data=json.loads(request.read_text(encoding='utf-8-sig'))
+                files=data['files']
+                if not isinstance(files,list) or len(files)>100 or any(not isinstance(p,str) for p in files):raise ValueError(tr('ファイルを開く要求が不正です。', 'Invalid file-open request'))
+                for path in files:
+                    try:
+                        doc=_open(path);results.append({'path':path,'status':'OPEN','document':doc.Name,'objects':len(doc.Objects)})
+                    except Exception:
+                        error=traceback.format_exc();App.Console.PrintError(error)
+                        results.append({'path':path,'status':'ERROR','error':error})
+                _json(_state/'responses'/request.name,{'pid':os.getpid(),'results':results})
+                if any(r['status']=='ERROR' for r in results):
+                    QtWidgets.QMessageBox.warning(Gui.getMainWindow(),'FullArcCAD',tr('ファイルを開けませんでした。\n', 'Could not open the following files.\n')+ '\n'.join(r['path'] for r in results if r['status']=='ERROR'))
+            except Exception:
+                _json(_state/'responses'/request.name,{'pid':os.getpid(),'error':traceback.format_exc()})
+            finally:request.unlink(missing_ok=True)
+            main=Gui.getMainWindow()
+            if main.isMinimized():main.showNormal()
+            else:main.show()
+            main.raise_();main.activateWindow()
+    finally:_busy=False
+(_state/'requests').mkdir(exist_ok=True);(_state/'responses').mkdir(exist_ok=True)
+Gui.getMainWindow().show()
+_timer=QtCore.QTimer(Gui.getMainWindow());_timer.timeout.connect(__import__('builtins')._fullarc_qt_slot(_poll));_timer.start(400)
+Gui._fullarccad_launch_timer=_timer
+_json(_state/'ready.json',{'pid':os.getpid(),'root':str(_root),'time':time.time(),'documents_before_requests':list(App.listDocuments())})
+QtCore.QTimer.singleShot(200,__import__('builtins')._fullarc_qt_slot(_poll))

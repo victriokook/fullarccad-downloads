@@ -1,0 +1,9 @@
+FullArcCAD dependency-reduced preview — third-party notices
+FreeCAD is required separately and is not included in this package. FullArcCAD runs as a workspace/UI layer inside the installed FreeCAD. It does not provide its own CAD kernel.
+Previously MIT-licensed FullArcCAD/FluxCAD material retains its original permissions; see LEGACY_MIT_LICENSE.txt. Changed files are not automatically wholly proprietary. Project-managed additions are now MIT licensed under runtime/LICENSE and runtime/OPEN-SOURCE.md.
+The unmodified sldprt-export reader is MIT licensed. Its source, original LICENSE and pinned upstream SOURCE.json are retained under runtime/solidworks_reader.
+SheetMetal and its bundled NetworkX are excluded. Upstream SheetMetal features are unavailable. An independent rectangular/sequential-bend prototype uses original analytic Part geometry; it does not restore the upstream addon.
+The separate FreeCAD runtime supplies Part, Sketcher, CAM/Path, Draft, Qt/PySide, NumPy, fontTools, Coin/pivy and other components, each with its applicable license. This package does not redistribute those libraries or font files.
+See runtime/THIRD_PARTY_NOTICES.md and runtime/LICENSES-AND-SOURCES.md for scope, attribution, upstream sources and runtime selection. runtime/FREECAD-LICENSE.html reproduces the installed FreeCAD license document; runtime/LGPL-2.1.txt provides the LGPL 2.1 text for components that use that version. Neither text relicenses this entire application.
+The eight bundled FCStd examples carry All rights reserved metadata. Earlier statements that this payload had MIT document metadata were inaccurate. Metadata does not revoke any earlier permissions or establish independent authorship.
+Native binaries are not immune to reverse engineering. Nothing in the application terms restricts rights granted by third-party licenses or the reverse engineering necessary to debug modifications where required by an applicable license.

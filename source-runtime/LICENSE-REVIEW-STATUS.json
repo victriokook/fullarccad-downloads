@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-02",
+  "source_declaration": "User: primarily created in chat; only known external code is documented in notices.",
+  "known_technical_remediations": [
+    "SheetMetal and bundled NetworkX excluded",
+    "Original MIT and reader MIT notices retained",
+    "Full FreeCAD license document and LGPL 2.1 text included",
+    "Application terms explicitly preserve modification and required debugging/reverse-engineering rights",
+    "Runtime replacement/configuration documented",
+    "Stale example metadata claim corrected within new package"
+  ],
+  "not_certified": [
+    "all independent authorship and rights",
+    "full legal interpretation of combined work and every runtime dependency",
+    "third-party patent/trademark or training-data claims"
+  ],
+  "native_application_modules_changed": false,
+  "windows_launcher_changed": true
+}

@@ -1,0 +1,165 @@
+"""Visible, linked construction axes for revolutions and circular patterns."""
+import math
+import FreeCAD as App
+import Part
+import model
+from edge_axis_frame import edge_frame
+from axis_values import axis_values
+from normal_axis_distance import check_distance
+from cone_apex_guard import check_apex
+from surface_isocurve_limits import validate_complexity
+from surface_frame_guard import check_frame
+from surface_period_guard import check_period
+from two_plane_direction import cross_direction
+import model_construction as references
+from i18n import tr
+
+
+def title(kind):
+    if kind=='edge':return tr('直線辺を通る軸','Axis Through Straight Edge')
+    if kind=='normal_point':return tr('面上の頂点を通る法線軸','Normal Axis at Vertex on Face')
+    if kind=='two_planes':return tr('2平面を通る軸','Axis Through Two Planes')
+    return tr('円柱・円すい・トーラスの中心軸','Axis Through Cylinder / Cone / Torus') if kind=='center' else tr('2点を通る軸','Axis Through Two Points')
+
+
+def center_face(ref):
+    shape=references.element(ref,'Face')
+    if not shape.isValid() or not isinstance(shape.Surface,(Part.Cylinder,Part.Cone,Part.Toroid)) or not all(math.isfinite(v) for v in shape.ParameterRange):
+        raise ValueError(tr('円柱・円すい・トーラスの有効な面を選択してください。','Select a valid cylindrical, conical or toroidal face.'))
+    return shape
+
+
+def geometry(kind,reference_a=None,reference_b=None,reversed=False,**unused):
+    if kind=='edge':
+        origin,direction,display=edge_frame(reference_a)
+    elif kind=='center':
+        face=center_face(reference_a);surface=face.Surface
+        u0,u1,v0,v1=face.ParameterRange
+        def center(v):return (surface.value(u0,v)+surface.value(u0+math.pi,v))*.5
+        if isinstance(surface,Part.Toroid):
+            coords,unit=axis_values(tuple(surface.Center),tuple(surface.Axis));origin=App.Vector(*coords);direction=App.Vector(*unit);display=App.Vector(origin)
+        else:
+            origin=center(0);direction=center(1)-origin;display=center((v0+v1)*.5)
+    elif kind=='normal_point':
+        face=references.element(reference_a,'Face');origin=references.vertex(reference_b)
+        if not face.isValid() or not isinstance(face.Surface,(Part.Plane,Part.Cylinder,Part.Sphere,Part.Toroid,Part.Cone,Part.BSplineSurface,Part.BezierSurface)):
+            raise ValueError(tr('平面・解析曲面・Bスプライン面・ベジェ面を選択してください。','Select a planar, analytical, B-spline or Bezier face.'))
+        freeform=isinstance(face.Surface,(Part.BSplineSurface,Part.BezierSurface))
+        if freeform:
+            surface=face.Surface
+            validate_complexity(surface.NbUPoles,surface.NbVPoles,surface.UDegree,surface.VDegree)
+            if isinstance(surface,Part.BSplineSurface):
+                if surface.isUPeriodic():check_period(surface.UPeriod())
+                if surface.isVPeriodic():check_period(surface.VPeriod())
+        check_distance(face.distToShape(Part.Vertex(origin))[0])
+        if isinstance(face.Surface,Part.Cone):check_apex((origin-face.Surface.Apex).Length)
+        u,v=face.Surface.parameter(origin)
+        if freeform:
+            first,second=face.tangentAt(u,v);check_frame(first.Length,second.Length,first.cross(second).Length)
+        direction=face.normalAt(u,v);display=App.Vector(origin)
+    elif kind=='two_planes':
+        first,n1=references.face(reference_a);second,n2=references.face(reference_b)
+        direction=App.Vector(*cross_direction(tuple(n1),tuple(n2)))
+        cross=n1.cross(n2);den=cross.dot(cross)
+        origin=(n2.cross(cross)*n1.dot(first)+cross.cross(n1)*n2.dot(second))/den
+        display=origin+direction*direction.dot((first+second)*.5-origin)
+    elif kind=='two_points':
+        origin=references.vertex(reference_a);second=references.vertex(reference_b)
+        direction=second-origin;display=(origin+second)*.5
+    else:raise ValueError('Unknown axis type')
+    if direction.Length<1e-7 or not all(math.isfinite(v) for v in tuple(origin)+tuple(direction)+tuple(display)):
+        raise ValueError(tr('位置の異なる2点、または有効な円柱・円すい面を選択してください。','Select two distinct points or a valid cylindrical or conical face.'))
+    direction.normalize()
+    if reversed:direction=-direction
+    return origin,direction,display
+
+
+def source_refs(kind,reference_a=None,reference_b=None,**unused):return [reference_a,reference_b] if kind in ('two_points','two_planes','normal_point') else [reference_a]
+
+
+def check_sources(doc,kind,existing=None,**values):
+    if existing and (existing.Document!=doc or getattr(existing,'FluxConstructionAxis','')!=kind):
+        raise ValueError(tr('同じ種類の構築軸を選択してください。','Select a construction axis of the same type.'))
+    for ref in source_refs(kind,**values):
+        if not ref or ref[0] is None:raise ValueError(tr('参照を選択してください。','Select a reference.'))
+        obj=ref[0]
+        if obj.Document!=doc:raise ValueError(tr('同じ文書内の参照を選択してください。','Select references in the same document.'))
+        if existing and (obj==existing or existing in obj.OutListRecursive):
+            raise ValueError(tr('この軸自身や後続の加工は参照できません。','Cannot reference this axis or its descendants.'))
+
+
+def build(kind,size=80,**values):
+    if not math.isfinite(size) or not .1<=size<=1000000:
+        raise ValueError(tr('表示長さは0.1～1000000 mmで指定してください。','Enter a display length from 0.1 to 1000000 mm.'))
+    origin,direction,center=geometry(kind,**values)
+    return Part.makeLine(center-direction*size*.5,center+direction*size*.5)
+
+
+def settings(obj):
+    return dict(reference_a=references.unpack(obj.ReferenceA),reference_b=references.unpack(obj.ReferenceB),size=obj.Length.Value,reversed=obj.Reversed)
+
+
+class ConstructionAxis:
+    def __init__(self,obj):obj.Proxy=self
+    def execute(self,obj):
+        try:
+            values=settings(obj);shape=build(obj.FluxConstructionAxis,**values)
+            origin,direction,center=geometry(obj.FluxConstructionAxis,**values)
+            parent=obj.getGlobalPlacement().multiply(obj.Placement.inverse())
+            obj.Placement=App.Placement();shape.Placement=parent.inverse();obj.Shape=shape
+            obj.Origin=origin;obj.Direction=direction;obj.Error=''
+        except Exception as error:
+            obj.Shape=Part.Shape();obj.Direction=App.Vector();obj.Error=str(error)
+    def dumps(self):return None
+    def loads(self,state):pass
+
+
+def create(doc,kind,existing=None,**values):
+    check_sources(doc,kind,existing,**values);expected=build(kind,**values)
+    if unchanged(existing,kind,**values):return existing
+    solids={o.Name for o in existing.InListRecursive if hasattr(o,'Shape') and o.Shape.Solids} if existing else set()
+    with model.transaction(doc,title(kind)):
+        obj=existing
+        if obj is None:
+            obj=doc.addObject('Part::FeaturePython',{'center':'CenterAxis','two_points':'TwoPointAxis','two_planes':'TwoPlaneAxis','normal_point':'NormalPointAxis','edge':'EdgeAxis'}[kind]);obj.Label=title(kind)
+            for typ,key in [('App::PropertyString','FluxConstructionAxis'),('App::PropertyLinkSubGlobal','ReferenceA'),('App::PropertyLinkSubGlobal','ReferenceB'),
+                            ('App::PropertyLinkListGlobal','SourceContainers'),('App::PropertyLength','Length'),('App::PropertyBool','Reversed'),
+                            ('App::PropertyVectorDistance','Origin'),('App::PropertyVector','Direction'),('App::PropertyString','Error')]:obj.addProperty(typ,key,'Construction')
+            obj.FluxConstructionAxis=kind
+            for key in ('FluxConstructionAxis','ReferenceA','ReferenceB','SourceContainers'):obj.setEditorMode(key,2)
+            for key in ('Placement','Origin','Direction','Error'):obj.setEditorMode(key,1)
+            ConstructionAxis(obj);obj.ViewObject.Proxy=0
+        data=dict(reference_a=None,reference_b=None,size=80,reversed=False);data.update(values)
+        if kind in ('center','edge'):data['reference_b']=None
+        for prop,key in (('ReferenceA','reference_a'),('ReferenceB','reference_b')):
+            ref=data[key];setattr(obj,prop,(ref[0],[ref[1]]) if ref else None)
+        parents=[]
+        for ref in source_refs(kind,**data):
+            parent=ref[0].getParentGeoFeatureGroup()
+            while parent:
+                if obj in parent.OutListRecursive:raise ValueError(tr('軸を含むグループは参照できません。','Cannot reference a group containing this axis.'))
+                if parent not in parents:parents.append(parent)
+                parent=parent.getParentGeoFeatureGroup()
+        obj.SourceContainers=parents;obj.Length=data['size'];obj.Reversed=bool(data['reversed']);doc.recompute()
+        if obj.Error:raise ValueError(obj.Error)
+        if obj.Shape.isNull() or not obj.Shape.isValid() or abs(obj.Shape.Length-expected.Length)>1e-6:
+            raise ValueError(tr('構築軸を作成できません。','Cannot create the construction axis.'))
+        for dependent in obj.InListRecursive:
+            if ('Invalid' in dependent.State or getattr(dependent,'Error','') or
+                    (hasattr(dependent,'Shape') and ((dependent.Shape.isNull() and dependent.TypeId!='Sketcher::SketchObject') or
+                    (not dependent.Shape.isNull() and not dependent.Shape.isValid()) or (dependent.Name in solids and not dependent.Shape.Solids)))):
+                raise ValueError(tr('後続の加工が成立しないため変更を取り消しました。','The edit would invalidate a later feature and was cancelled.'))
+        if not existing:
+            obj.ViewObject.LineColor=(.88,.48,.12);obj.ViewObject.PointColor=(.88,.48,.12);obj.ViewObject.LineWidth=3
+    return obj
+
+
+def unchanged(existing, kind, **values):
+    if existing is None or existing.FluxConstructionAxis != kind or existing.Error or existing.Shape.isNull() or not existing.Shape.isValid():
+        return False
+    data = dict(reference_a=None, reference_b=None, size=80, reversed=False)
+    data.update(values)
+    if kind == 'center':
+        data['reference_b'] = None
+    data['reversed'] = bool(data['reversed'])
+    return settings(existing) == data

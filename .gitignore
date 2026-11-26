@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.obj
+*.pdb
+*.exe
+*.dll
+/work/
+/releases/
+/user-data/
+/outputs/
+/evidence/
+.env
+.env.*

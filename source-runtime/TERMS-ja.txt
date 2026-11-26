@@ -1,0 +1,8 @@
+FullArcCAD オープンソース版・利用条件（2026年11月26日）
+
+FullArcCADのプロジェクト管理コード、ビルドスクリプト、独自アイコン、テンプレート、使用例とガイドをMITライセンスで公開します。利用、複製、改変、再配布、商用利用ができます。著作権表示とMIT許諾文を保持してください。正式な許諾文はLICENSEを参照してください。
+この公開に含まれるプロジェクト管理部分について、以前の権利留保表記をこのMIT許諾に置き換えます。使用例FCStdに残る旧メタデータより、この明示のMIT許諾を適用します。
+第三者コードと外部FreeCADランタイムには、それぞれのライセンスが適用されます。第三者の著作権表示とライセンス原文を保持しています。
+ソフトウェアは現状のまま提供します。MITライセンスに記載する保証の否認と責任制限が適用されます。作成したモデルの権利を要求しません。
+
+FullArcCAD project-managed source code, build scripts, original icons, templates, examples and guides are released under the MIT License. You may use, modify, redistribute and use them commercially subject to its notice requirements. This grant supersedes earlier reserved-rights statements for those project-managed materials, including legacy FCStd metadata. Third-party components retain their own licenses. See LICENSE and THIRD_PARTY_NOTICES.md.

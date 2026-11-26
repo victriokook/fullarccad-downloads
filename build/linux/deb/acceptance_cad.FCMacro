@@ -1,0 +1,79 @@
+import os,sys,json,traceback,importlib,math
+from pathlib import Path
+import FreeCAD as App,FreeCADGui as Gui
+from PySide import QtCore
+root=Path(os.environ['FAC_TEST_ROOT']);out=Path(os.environ['FAC_TEST_OUT']);out.mkdir(exist_ok=True)
+mode=os.environ.get('FAC_TEST_MODE','create')
+sys.dont_write_bytecode=True
+exec(compile((root/'runtime/Launch.FCMacro').read_text(),str(root/'runtime/Launch.FCMacro'),'exec'),{'__file__':str(root/'runtime/Launch.FCMacro'),'__name__':'__main__'})
+def tests():
+    result={'mode':mode,'freecad':App.Version(),'python':sys.version,'tests':[]}
+    def check(name,fn):
+        detail=fn();result['tests'].append({'name':name,'pass':True,'details':detail})
+    try:
+        import model,save_guard,export_tools,Part
+        if mode=='create':
+            def imports():
+                files=list((root/'runtime').glob('*.so'))
+                for p in files:importlib.import_module(p.name.split('.')[0])
+                assert len(files)==432,len(files)
+                return len(files)
+            check('all_432_application_modules_import',imports)
+            def geometry():
+                doc=App.newDocument('NativeCut');a=model.box(doc,20,15,20);b=model.cylinder(doc,3,20)
+                b.Placement.Base=App.Vector(10,7.5,0);doc.recompute()
+                cut=doc.addObject('Part::Cut','Cut');cut.Base=a;cut.Tool=b;doc.recompute();a.Visibility=False;b.Visibility=False
+                volume=6000-math.pi*9*20
+                assert cut.Shape.isValid() and abs(cut.Shape.Volume-volume)<1e-6
+                export_tools.export_step([cut],str(out/'cut.step'))
+                save_guard.write(doc,out/'cut.FCStd')
+                imported=App.newDocument('NativeStep');__import__('ImportGui').insert(str(out/'cut.step'),imported.Name);imported.recompute()
+                solid=next(o for o in imported.Objects if hasattr(o,'Shape') and o.Shape.Solids)
+                assert solid.Shape.isValid() and abs(solid.Shape.Volume-volume)<1e-5
+                save_guard.write(imported,out/'step.FCStd')
+                return {'volume':volume,'step_bytes':(out/'cut.step').stat().st_size}
+            check('shape_STEP_export_import_and_save',geometry)
+            def sketch():
+                doc=App.newDocument('NativeSketch');doc.UndoMode=1
+                rectangle=model.rectangle(doc,20,10);extrude=model.extrude(doc,rectangle,8)
+                assert abs(extrude.Shape.Volume-1600)<1e-6
+                doc.openTransaction('Native edit');extrude.LengthFwd=12;doc.recompute();doc.commitTransaction()
+                assert abs(extrude.Shape.Volume-2400)<1e-6
+                doc.undo();doc.recompute();assert abs(extrude.Shape.Volume-1600)<1e-6
+                doc.redo();doc.recompute();assert abs(extrude.Shape.Volume-2400)<1e-6
+                save_guard.write(doc,out/'sketch.FCStd')
+                return {'volume':extrude.Shape.Volume,'proxy':type(extrude.Base.Proxy).__module__ if hasattr(extrude.Base,'Proxy') else None}
+            check('native_sketch_proxy_dimension_undo_redo',sketch)
+            def failed_save():
+                doc=App.ActiveDocument;previous=(doc.FileName,doc.Label,Gui.getDocument(doc.Name).Modified)
+                blocker=out/'not-a-directory';blocker.write_text('block')
+                try:save_guard.write(doc,blocker/'bad.FCStd')
+                except Exception:pass
+                else:raise AssertionError('Expected save failure')
+                assert (doc.FileName,doc.Label,Gui.getDocument(doc.Name).Modified)==previous
+                return True
+            check('failed_save_preserves_document_metadata',failed_save)
+        else:
+            def reopen():
+                volumes={}
+                for name in ('cut','step','sketch'):
+                    doc=App.openDocument(str(out/(name+'.FCStd')));doc.recompute()
+                    solids=[o for o in doc.Objects if hasattr(o,'Shape') and not o.Shape.isNull() and o.Shape.Solids]
+                    assert solids and all(o.Shape.isValid() for o in solids)
+                    if name=='sketch':
+                        extrude=doc.getObject('Extrude');assert abs(extrude.Shape.Volume-2400)<1e-6
+                        rectangle=doc.getObject('Rectangle');rectangle.setDatum('Width',App.Units.Quantity('24 mm'));doc.recompute()
+                        assert abs(extrude.Shape.Volume-2880)<1e-6
+                    volumes[name]=[o.Shape.Volume for o in solids]
+                    save_guard.write(doc,out/('reopened-'+name+'.FCStd'))
+                return volumes
+            check('separate_process_reopen_native_proxy_and_reedit',reopen)
+        Gui.activeDocument().activeView().viewAxonometric();Gui.activeDocument().activeView().fitAll()
+        Gui.activeDocument().activeView().saveImage(str(out/(mode+'-view.png')),1000,700,'Current')
+        result['pass']=True
+    except Exception:
+        result['pass']=False;result['error']=traceback.format_exc();App.Console.PrintError(result['error'])
+    (out/(mode+'.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2))
+    for doc in list(App.listDocuments().values()):Gui.getDocument(doc.Name).Modified=False;App.closeDocument(doc.Name)
+    QtCore.QTimer.singleShot(300,lambda:Gui.getMainWindow().close())
+QtCore.QTimer.singleShot(1500,tests)

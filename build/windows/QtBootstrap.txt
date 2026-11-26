@@ -1,0 +1,35 @@
+"""Public generic ABI/bootstrap and Python-function adapter for PySide 6.8.
+All application implementation remains in native extension modules.
+"""
+import sys,builtins,weakref
+from pathlib import Path
+sys.dont_write_bytecode=True
+if sys.version_info[:2]!=(3,11):
+    raise RuntimeError('FreeCAD with Python 3.11 x64 is required')
+_slot_cache=weakref.WeakValueDictionary()
+def _fullarc_qt_slot(callback,spec=None):
+    function=getattr(callback,'__func__',callback)
+    if type(function).__name__!='cython_function_or_method':return callback
+    try:return _slot_cache[callback]
+    except KeyError:pass
+    if spec is None:
+        code=function.__code__
+        if code is None:raise TypeError('Missing native callback signature: '+str(function))
+        count=code.co_argcount-(getattr(callback,'__self__',None) is not None)
+        required=count-len(function.__defaults__ or ())
+        varargs=bool(code.co_flags & 4);keywords=bool(code.co_flags & 8)
+    else:count,required,varargs,keywords=spec
+    names=['a'+str(i) for i in range(count)]
+    declaration=[name+('=_missing' if i>=required else '') for i,name in enumerate(names)]
+    if varargs:declaration.append('*args')
+    if keywords:declaration.append('**kwargs')
+    namespace={'_callback':callback,'_missing':object()}
+    tail=(',*args' if varargs else '')+(',**kwargs' if keywords else '')
+    body='def invoke('+','.join(declaration)+'):\n    values=['+','.join(names)+']\n    while values and values[-1] is _missing:values.pop()\n    return _callback(*values'+tail+')'
+    exec(body,namespace)
+    wrapper=namespace['invoke'];_slot_cache[callback]=wrapper
+    return wrapper
+builtins._fullarc_qt_slot=_fullarc_qt_slot
+root=str(Path(__file__).resolve().parent)
+if root not in sys.path:sys.path.insert(0,root)
+import _fullarc_launch
